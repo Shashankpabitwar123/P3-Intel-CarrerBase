@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <button id="langToggle" class="lang-toggle" aria-label="Toggle Arabic/English">Arabic</button>
+
   <!-- Animated background -->
   <canvas id="bg" aria-hidden="true"></canvas>
   <div class="noise" aria-hidden="true"></div>
@@ -17,17 +19,23 @@
   <a id="heroTop"></a>
 <header class="hero">
     <div class="hero-inner">
-      <div class="intel-mark" aria-hidden="true">
-        <svg viewBox="0 0 280 80" class="intel-logo">
+      <div class="intel-mark" data-no-translate dir="ltr" aria-label="Intel logo">
+        <svg viewBox="0 0 280 80" class="intel-logo" role="img" aria-label="Intel">
           <defs>
             <linearGradient id="intelBlue" x1="0" x2="1">
               <stop offset="0%" stop-color="#7FDBFF"/>
               <stop offset="100%" stop-color="#1f9cff"/>
             </linearGradient>
           </defs>
-          <text x="0" y="58" font-size="64" font-family="Inter, system-ui, sans-serif" fill="url(#intelBlue)" font-weight="800">intel</text>
+          <text x="0" y="58"
+                font-size="64"
+                font-family="Inter, system-ui, sans-serif"
+                fill="url(#intelBlue)"
+                font-weight="800"
+                style="direction:ltr; unicode-bidi:isolate">intel</text>
         </svg>
       </div>
+      
       <h1><span>Sustainability</span> Through the Ages</h1>
       <p class="lead">From founding and early chips to modern sustainability milestones—scrub the timeline and explore each moment.</p>
       <p class="hint">Hover a card to reveal a quick summary. Click/tap to open full details.</p>
@@ -68,6 +76,38 @@
     </div>
 
     <!-- Single scrubber slider -->
+    <!-- Subscription Block -->
+    <section id="subscribe" class="subscribe-wrap" aria-labelledby="subscribeTitle">
+      <div class="subscribe-card">
+        <h2 id="subscribeTitle">Intel Sustainability Newsletter</h2>
+        <p class="lead sublead" data-i18n="sub_blurb">
+          Subscribe for quarterly updates on Intel’s sustainability goals, milestones, and ways you can contribute.
+        </p>
+
+        <form id="subscribeForm" class="subscribe-form" novalidate>
+          <div class="row">
+            <label>
+              <span>Name</span>
+              <input type="text" id="subName" name="name" placeholder="Your name" required />
+            </label>
+            <label>
+              <span>Email (Gmail only)</span>
+              <input type="email" id="subEmail" name="email" placeholder="you@gmail.com" required />
+            </label>
+          </div>
+          <label class="consent">
+            <input type="checkbox" id="subConsented" required />
+            <span>I agree to receive Intel sustainability updates.</span>
+          </label>
+          <div class="action">
+            <button type="submit" class="btn primary">Subscribe</button>
+            <small class="muted" id="privacyNote">We’ll never share your email.</small>
+          </div>
+          <p id="subMsg" class="sub-msg" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
     <div class="scrubber" aria-label="Timeline slider">
       <input id="scrubber" type="range" min="0" max="100" value="0" aria-label="Scrub through the timeline" />
     </div>
@@ -91,7 +131,13 @@
   </div>
 
   <script src="script.js"></script>
+
+  <footer class="site-footer" dir="ltr">
+    <div class="footer-inner">@2025 Shashank Pabitwar, intel project</div>
+  </footer>
+
 </body>
 </html>
+
 
 
