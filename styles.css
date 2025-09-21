@@ -184,3 +184,61 @@ h1 span{background:linear-gradient(90deg,var(--intel-2),var(--intel)); -webkit-b
 }
 .modal-close:hover{ filter:brightness(1.2); }
 .modal-close:active{ transform:scale(0.96); }
+
+
+/* ---- Language toggle ---- */
+.lang-toggle{
+  position:fixed; top:16px; right:16px; z-index:1200;
+  background:var(--glass-2); color:var(--text);
+  border:1px solid var(--border); border-radius:999px;
+  padding:10px 14px; font-weight:600; backdrop-filter: blur(8px);
+  cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.25);
+}
+.lang-toggle:focus{ outline:2px solid var(--intel); outline-offset:2px; }
+
+/* ---- Subscription card ---- */
+.subscribe-wrap{padding:40px 20px 64px;}
+.subscribe-card{
+  max-width:1100px; margin:0 auto;
+  background:var(--glass); border:1px solid var(--border); border-radius:var(--radius);
+  padding: clamp(20px, 5vw, 40px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+.subscribe-card h2{font-size: clamp(28px,4.2vw,42px); margin:0 0 10px;}
+.subscribe-card .sublead{max-width:1100px; opacity:.9; margin-bottom:24px;}
+
+.subscribe-form .row{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.subscribe-form label{display:flex; flex-direction:column; gap:8px; font-weight:600;}
+.subscribe-form input[type="text"],
+.subscribe-form input[type="email"]{
+  background:rgba(255,255,255,.95); color:#0b2742; border-radius:12px; border:none;
+  padding:14px 16px; font-size:16px;
+}
+.subscribe-form .consent{display:flex; align-items:center; gap:10px; margin:16px 0 12px; font-weight:600;}
+.subscribe-form .action{display:flex; align-items:center; gap:14px;}
+.subscribe-form .muted{color:var(--muted);}
+.subscribe-form .sub-msg{margin-top:10px; font-weight:600;}
+
+@media (max-width: 720px){
+  .subscribe-form .row{grid-template-columns:1fr;}
+}
+
+/* ---- Footer ---- */
+.site-footer{padding:24px 20px 60px; text-align:center; color:var(--muted);}
+.site-footer .footer-inner{
+  max-width:1100px; margin:0 auto; border-top:1px solid var(--border);
+  padding-top:16px;
+}
+
+/* ---- RTL support ---- */
+:root[dir="rtl"] body, html[dir="rtl"] body{ direction: rtl; }
+[dir="rtl"] .lang-toggle{ right:auto; left:16px; }
+[dir="rtl"] .subscribe-form .row{ grid-template-columns:1fr 1fr; }
+@media (max-width: 720px){
+  [dir="rtl"] .subscribe-form .row{ grid-template-columns:1fr; }
+}
+
+
+/* Helper class for RTL in case selectors rely on class */
+.rtl { direction: rtl; }
+.rtl .lang-toggle{ left:16px; right:auto; }
