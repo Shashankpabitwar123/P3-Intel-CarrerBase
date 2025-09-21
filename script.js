@@ -357,3 +357,295 @@ if (categorySelect){
   categorySelect.addEventListener('input', safeApplyFilters);
 }
 
+
+
+
+
+/* ---------- Subscription form (Gmail only) ---------- */
+(() => {
+  const form = document.getElementById('subscribeForm');
+  if(!form) return;
+  const name = document.getElementById('subName');
+  const email = document.getElementById('subEmail');
+  const consent = document.getElementById('subConsented');
+  const msg = document.getElementById('subMsg');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    msg.textContent = '';
+
+    const n = (name.value||'').trim();
+    const em = (email.value||'').trim().toLowerCase();
+    if(!n){ msg.textContent = 'Please enter your name.'; return; }
+    if(!/^[^@\s]+@gmail\.com$/.test(em)){ msg.textContent = 'Please use a valid @gmail.com address.'; return; }
+    if(!consent.checked){ msg.textContent = 'Please agree to receive updates.'; return; }
+
+    msg.textContent = 'Thanks! You are subscribed.';
+  });
+})();
+
+
+/* ---------- Language Toggle (robust) ---------- */
+(() => {
+  // Store originals per TEXT NODE (not parent) so restoration is exact.
+  const ORIGINAL_TEXT = new WeakMap();     // TextNode -> original string
+  const ORIGINAL_ATTR = new WeakMap();     // Element  -> {placeholder, ariaLabel}
+
+  // Phrase dictionary (extend as needed)
+  const PHRASES = new Map([
+    // --- Global / headings ---
+    ["Intel — Sustainability Through the Ages","إنتل — الاستدامة عبر العصور"],
+    ["Through the Ages","عبر العصور"],
+    ["From founding and early chips to modern sustainability milestones—scrub the timeline and explore each moment.","من التأسيس والرقاقات الأولى إلى إنجازات الاستدامة الحديثة — تصفّح الخط الزمني واستكشف كل لحظة."],
+    ["Hover a card to reveal a quick summary. Click/tap to open full details.","حرّك المؤشر فوق البطاقة لتعرض ملخصًا سريعًا. انقر/اضغط لفتح التفاصيل الكاملة."],
+  
+    // --- Filters / legend / UI ---
+    ["All categories","جميع الفئات"],
+    ["All","الكل"],
+    ["Search","بحث"],
+    ["Year","السنة"],
+    ["Category","الفئة"],
+    ["History","التاريخ"],
+    ["Innovation","الابتكار"],
+    ["People","الأفراد"],
+    ["Environment","البيئة"],
+    ["Energy","الطاقة"],
+    ["Water","المياه"],
+    ["Goals","الأهداف"],
+    ["Materials","المواد"],
+    ["Close","إغلاق"],
+    ["Read more","اقرأ المزيد"],
+    ["Learn more","اعرف المزيد"],
+    ["Details…","التفاصيل…"],
+  
+    // --- Cards: Intel Founded (1968) ---
+    ["Intel Founded","تأسيس إنتل"],
+    ["Robert Noyce and Gordon Moore found Intel in Santa Clara.","روبرت نويْس وغوردون مور يؤسسان شركة إنتل في سانتا كلارا."],
+    ["Intel Corporation is founded in 1968 by Robert Noyce and Gordon Moore. The company begins with a focus on semiconductor memory and quickly becomes a leader in integrated electronics, forming the base for future microprocessor breakthroughs.","تأسست شركة إنتل عام ١٩٦٨ على يد روبرت نويْس وغوردون مور. بدأت الشركة بالتركيز على ذاكرة أشباه الموصلات وسرعان ما أصبحت رائدة في الإلكترونيات المتكاملة، مما مهّد الطريق لاختراقات المعالجات الدقيقة لاحقًا."],
+  
+    // --- Cards: Intel® 4004 — First Microprocessor (1971) ---
+    ["Intel® 4004 — First Microprocessor","إنتل® 4004 — أول معالج دقيق"],
+    ["The 4004 debuts as the first commercial microprocessor.","ظهر 4004 كأول معالج دقيق تجاري."],
+    ["Intel introduces the 4004, a 4-bit CPU. It demonstrates that general-purpose computing can be integrated into a single chip—paving the way for programmable electronics in calculators, control systems, and, ultimately, personal computers.","قدّمت إنتل المعالج 4004، وهو وحدة معالجة مركزية بقدرة ٤-بت. أثبت إمكانية دمج الحوسبة العامة في شريحة واحدة—ممهّدًا الطريق للآلات الحاسبة القابلة للبرمجة وأنظمة التحكم، وفي النهاية أجهزة الحاسوب الشخصية."],
+  
+    // --- Cards: 8086 Architecture (1978) ---
+    ["8086 Architecture","معمارية 8086"],
+    ["The 16-bit 8086 launches the x86 family.","أطلق المعالج 8086 بقدرة ١٦-بت عائلة x86."],
+    ["Intel’s 8086 processor, with a 16-bit architecture, becomes the foundation of the x86 instruction set. This lineage evolves through 286, 386, 486 and Pentium® families—defining software compatibility for generations of computers.","أصبح معالج إنتل 8086 بمعمارية ١٦-بت أساس مجموعة تعليمات x86، وتطورت هذه السلالة عبر عائلات 286 و386 و486 وبنتيوم®، محدِّدةً توافق البرمجيات لأجيال من الحواسيب."],
+  
+    // --- Cards: Pentium® Era (1993) ---
+    ["Pentium® Era","عصر بنتيوم®"],
+    ["Pentium® processors popularize multimedia performance.","نشرت معالجات بنتيوم® أداء الوسائط المتعددة على نطاق واسع."],
+    ["The Pentium® brand ushers in higher IPC, superscalar design, and floating-point performance that fuels richer productivity and media applications—helping PCs go mainstream throughout the 1990s.","قدّمت علامة بنتيوم® معدلات تنفيذ أعلى لكل دورة، وتصميمًا فائق التدرج، وأداءً أقوى للنقطة العائمة، ما غذّى تطبيقات الإنتاجية والوسائط الغنية—وساعد الحواسيب الشخصية على الانتشار الواسع خلال التسعينيات."],
+  
+    // --- Cards: Multi-Core Mainstream (2006) ---
+    ["Multi-Core Mainstream","الانتشار الواسع للمعالجات متعددة الأنوية"],
+    ["Dual- and quad-core designs go mainstream.","تصميمات ثنائية ورباعية الأنوية تصبح شائعة."],
+    ["Intel ramps multi-core CPUs across client and data center platforms. Parallel execution, improved power management and new instruction sets expand performance per watt for modern workloads.","توسّع إنتل انتشار وحدات المعالجة متعددة الأنوية عبر منصات الحواسيب ومراكز البيانات. يرفع التنفيذ المتوازي وتحسين إدارة الطاقة والتعليمات الجديدة الأداء لكل واط لأعباء العمل الحديثة."],
+  
+    // --- Cards: Conflict-Free Microprocessors (2014) ---
+    ["Conflict-Free Microprocessors","معالجات خالية من الصراعات"],
+    ["Microprocessors verified conflict-free for 3TG.","معالجات موثّقة بأنها خالية من صراعات معادن 3TG."],
+    ["Intel advances responsible sourcing with microprocessors verified as conflict-free for tin, tantalum, tungsten, and gold. The program builds supplier transparency and auditing to reduce the risk of minerals linked to armed conflict.","تعزّز إنتل التوريد المسؤول بمعالجات موثّقة خالية من صراعات القصدير والتنتالوم والتنغستن والذهب. يبني البرنامج شفافية المورّدين والتدقيق لتقليل مخاطر المعادن المرتبطة بالنزاعات المسلحة."],
+  
+    // --- Cards: Water Restoration Projects Begin (2017) ---
+    ["Water Restoration Projects Begin","بدء مشاريع استعادة المياه"],
+    ["Watershed projects return water to local ecosystems.","تعيد مشاريع أحواض الأنهار المياه إلى الأنظمة البيئية المحلية."],
+    ["Intel funds watershed restorations that help recharge aquifers, improve streamflow, and support habitats in the communities where it operates. These projects complement factory conservation to reduce net water impacts.","تموّل إنتل ترميم أحواض الأنهار للمساعدة في إعادة تغذية المياه الجوفية وتحسين تدفّق الجداول ودعم الموائل في المجتمعات التي تعمل فيها. تكمل هذه المشاريع جهود الحفاظ داخل المصانع لتقليل الأثر الصافي على المياه."],
+  
+    // --- Cards: RISE 2030 Strategy (2020) ---
+    ["RISE 2030 Strategy","استراتيجية RISE 2030"],
+    ["Goals for energy, water, circularity, and community.","أهداف للطاقة والمياه والاقتصاد الدائري والمجتمع."],
+    ["The RISE 2030 framework sets measurable goals—100% renewable electricity, net-positive water, zero total waste to landfill, and deepened community impact—aligned to Intel’s role in enabling sustainable technology at scale.","يحدّد إطار RISE 2030 أهدافًا قابلة للقياس—١٠٠٪ كهرباء متجددة، ومياه إيجابية صافيًا، وصفر نفايات إلى المدافن، وتعميق الأثر المجتمعي—متوافقًا مع دور إنتل في تمكين التكنولوجيا المستدامة على نطاق واسع."],
+  
+    // --- Cards: On-Site & Global Renewables (2021) ---
+    ["On-Site & Global Renewables","الطاقة المتجددة في المواقع وحول العالم"],
+    ["Solar and renewable purchases expand worldwide.","تتوسع عمليات شراء الطاقة الشمسية والمتجددة حول العالم."],
+    ["Intel grows on-site solar arrays and purchases more renewable electricity through PPAs and certificates. Efficiency projects and abatement complement clean energy to reduce operational emissions.","تزيد إنتل مصفوفات الطاقة الشمسية في مواقعها وتشتري المزيد من الكهرباء المتجددة عبر اتفاقيات شراء الطاقة والشهادات. تكمل مشاريع الكفاءة والمعالجة الطاقة النظيفة لخفض الانبعاثات التشغيلية."],
+  
+    // --- Cards: Net-Positive Water (2022) ---
+    ["Net-Positive Water (Select Regions)","مياه إيجابية صافيًا (مناطق محددة)"],
+    ["Restoration + conservation return more water than used.","الترميم + الحفاظ يعيدان مياهًا أكثر مما يُستهلك."],
+    ["Combining factory conservation with funded restoration projects, Intel achieves net-positive water balances in certain operating regions, strengthening local water resilience.","بدمج الحفاظ داخل المصانع مع مشاريع الترميم المموّلة، تحقق إنتل توازنًا مائيًا إيجابيًا في بعض مناطق التشغيل، ما يعزّز مرونة المياه محليًا."],
+  
+    // --- Cards: 99% Renewable Electricity (Ops) (2023) ---
+    ["99% Renewable Electricity (Ops)","٩٩٪ كهرباء متجددة (العمليات)"],
+    ["Operations report 99% renewable electricity.","تُبلغ العمليات عن ٩٩٪ كهرباء متجددة."],
+    ["Intel’s operations report 99% renewable electricity usage worldwide, alongside ongoing efficiency work. The roadmap continues toward 100% renewable electricity and net-zero scope 1 & 2 by 2040.","تشير عمليات إنتل إلى استخدام ٩٩٪ كهرباء متجددة عالميًا، إلى جانب جهود الكفاءة المستمرة. وتستمر خارطة الطريق نحو كهرباء متجددة ١٠٠٪ وصافي انبعاثات صفري للنطاقين ١ و٢ بحلول ٢٠٤٠."],
+  
+    // --- Cards: 2030 Ambitions (2030) ---
+    ["2030 Ambitions","طموحات 2030"],
+    ["Targets include 100% renewable electricity & net-positive water.","تشمل الأهداف كهرباء متجددة ١٠٠٪ ومياه إيجابية صافيًا."],
+    ["By 2030, Intel targets 100% renewable electricity across operations, net-positive water, circular manufacturing practices, and sustained community initiatives that multiply impact through the broader technology ecosystem.","بحلول ٢٠٣٠، تستهدف إنتل كهرباء متجددة ١٠٠٪ عبر العمليات، ومياهًا إيجابية صافيًا، وممارسات تصنيع دائرية، ومبادرات مجتمعية مستدامة تضاعف الأثر عبر منظومة التكنولوجيا."],
+  
+    // --- Subscribe block / footer ---
+    ["Subscribe","اشترك"],
+    ["Subscribe for quarterly updates on Intel’s sustainability goals, milestones, and ways you can contribute.","اشترك لتصلك تحديثات ربع سنوية حول أهداف واستراتيجيات الاستدامة لدى إنتل، وأبرز الإنجازات، وطرق مساهمتك."],
+    ["Email address","البريد الإلكتروني"],
+    ["Your email","بريدك الإلكتروني"],
+    ["I agree to receive Intel sustainability updates.","أوافق على تلقي تحديثات الاستدامة من إنتل."],
+    ["Email (Gmail only)","البريد الإلكتروني (Gmail فقط)"],
+    ["We’ll never share your email.","لن نشارك بريدك الإلكتروني مطلقًا."],
+    ["Intel Sustainability Newsletter","نشرة إنتل للاستدامة"],
+    ["Search years, titles, or topics…","ابحث عن سنوات أو عناوين أو مواضيع…"],
+    ["Your name","اسمك"],
+    ["you@gmail.com","you@gmail.com"],
+    ["Arabic","العربية"],
+    ["English","English"],
+    ["@2025 Shashank Pabitwar, intel project","@٢٠٢٥ ششانك بابيتوار، مشروع إنتل"]
+  ]);
+
+  // Ensure truncated previews (150 chars + …) translate:
+(function addTruncatedDetailPairs(){
+  if (!Array.isArray(data)) return;
+  data.forEach(evt => {
+    const en = (evt && evt.detail) ? String(evt.detail) : "";
+    if (!en) return;
+    const previewEn = en.slice(0,150) + (en.length > 150 ? "…" : "");
+    // If we have a full Arabic for this detail, make a truncated Arabic too:
+    const fullAr = PHRASES.get(en);
+    if (fullAr) {
+      const previewAr = fullAr.slice(0,150) + (fullAr.length > 150 ? "…" : "");
+      PHRASES.set(previewEn, previewAr);
+    }
+  });
+})();
+
+
+  // Word-level dictionary for fallback tokens
+  const WORDS = new Map([
+    ["sustainability","الاستدامة"],["through","عبر"],["the","ال"],["ages","العصور"],
+    ["history","التاريخ"],["innovation","الابتكار"],["people","الأفراد"],["environment","البيئة"],
+    ["subscribe","اشترك"],["email","البريد"],["address","العنوان"],["submit","إرسال"],
+    ["search","بحث"],["close","إغلاق"],["read","اقرأ"],["more","المزيد"],["less","أقل"],
+    ["learn","اعرف"],["next","التالي"],["previous","السابق"],["cancel","إلغاء"],["reset","إعادة تعيين"]
+  ]);
+
+  const toEasternDigits = (s) => s.replace(/[0-9]/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+
+  function translateString(str){
+    if (!str) return str;
+    const trimmed = str.trim();
+    if (!trimmed) return str;
+
+    // exact phrase first
+    const direct = PHRASES.get(trimmed) || PHRASES.get(trimmed.replace(/\s+/g,' '));
+    if (direct) return str.replace(trimmed, toEasternDigits(direct));
+
+    // token-level fallback
+    const out = trimmed.split(/(\s+)/).map(tok => {
+      if (/^\s+$/.test(tok)) return tok;
+      // leave pure numbers/punct but convert digits
+      if (/^[\d\-/.:,]+$/.test(tok)) return toEasternDigits(tok);
+      const lower = tok.toLowerCase();
+      const w = WORDS.get(lower);
+      return w ? w : tok;
+    }).join('');
+
+    return str.replace(trimmed, toEasternDigits(out));
+  }
+
+  function walkTextNodes(root, onText){
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node){
+        const p = node.parentElement;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        const tag = p.tagName;
+        if (/(SCRIPT|STYLE|NOSCRIPT)/.test(tag)) return NodeFilter.FILTER_REJECT;
+        // skip hidden elements (display:none) to avoid toggling things like templates
+        const cs = p instanceof Element ? getComputedStyle(p) : null;
+        if (cs && (cs.display === 'none' || cs.visibility === 'hidden')) return NodeFilter.FILTER_REJECT;
+        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        // avoid translating inside inputs/buttons where value is not textContent
+        if (/^(INPUT|TEXTAREA|SELECT)$/.test(tag)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+        if (p.closest('.intel-logo,[data-no-translate],svg,canvas')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+      }
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(onText);
+  }
+
+  function setArabic(){
+    const root = document.documentElement;
+    root.setAttribute('lang','ar');
+    root.setAttribute('dir','rtl');
+    if (document.body) document.body.setAttribute('dir','rtl');
+    root.classList.add('rtl');
+
+    const btn = document.getElementById('langToggle');
+    if (btn) btn.textContent = 'English';
+
+    // attributes
+    document.querySelectorAll('[placeholder], [aria-label]').forEach(el => {
+      if (!ORIGINAL_ATTR.has(el)) {
+        ORIGINAL_ATTR.set(el, {
+          placeholder: el.getAttribute('placeholder'),
+          ariaLabel: el.getAttribute('aria-label')
+        });
+      }
+      const ph = el.getAttribute('placeholder');
+      if (ph) el.setAttribute('placeholder', translateString(ph));
+      const al = el.getAttribute('aria-label');
+      if (al) el.setAttribute('aria-label', translateString(al));
+    });
+
+    // texts
+    walkTextNodes(document.body || document, node => {
+      if (!ORIGINAL_TEXT.has(node)) ORIGINAL_TEXT.set(node, node.nodeValue);
+      node.nodeValue = translateString(ORIGINAL_TEXT.get(node));
+    });
+  }
+
+  function setEnglish(){
+    const root = document.documentElement;
+    root.setAttribute('lang','en');
+    root.setAttribute('dir','ltr');
+    if (document.body) document.body.setAttribute('dir','ltr');
+    root.classList.remove('rtl');
+
+    const btn = document.getElementById('langToggle');
+    if (btn) btn.textContent = 'Arabic';
+
+    // restore attributes
+    document.querySelectorAll('[placeholder], [aria-label]').forEach(el => {
+      const orig = ORIGINAL_ATTR.get(el);
+      if (orig) {
+        if (orig.placeholder != null) el.setAttribute('placeholder', orig.placeholder);
+        if (orig.ariaLabel  != null) el.setAttribute('aria-label',  orig.ariaLabel);
+      }
+    });
+
+    // restore text nodes
+    walkTextNodes(document.body || document, node => {
+      const orig = ORIGINAL_TEXT.get(node);
+      if (orig != null) node.nodeValue = orig;
+    });
+  }
+
+  function initToggle(){
+    const btn = document.getElementById('langToggle');
+    if (!btn) return false;
+
+    // initialize to current dir without altering content first time
+    const isAR = (document.documentElement.getAttribute('dir') === 'rtl');
+    if (isAR) setArabic(); else setEnglish();
+
+    btn.addEventListener('click', () => {
+      const nowAR = (document.documentElement.getAttribute('dir') === 'rtl');
+      if (nowAR) setEnglish(); else setArabic();
+    });
+    return true;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initToggle, { once:true });
+  } else if (!initToggle()) {
+    setTimeout(initToggle, 0);
+  }
+})();;;
+
