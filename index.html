@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Intel — Sustainability Through the Ages</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Animated background -->
+  <canvas id="bg" aria-hidden="true"></canvas>
+  <div class="noise" aria-hidden="true"></div>
+
+  <!-- Hero -->
+  <a id="heroTop"></a>
+<header class="hero">
+    <div class="hero-inner">
+      <div class="intel-mark" aria-hidden="true">
+        <svg viewBox="0 0 280 80" class="intel-logo">
+          <defs>
+            <linearGradient id="intelBlue" x1="0" x2="1">
+              <stop offset="0%" stop-color="#7FDBFF"/>
+              <stop offset="100%" stop-color="#1f9cff"/>
+            </linearGradient>
+          </defs>
+          <text x="0" y="58" font-size="64" font-family="Inter, system-ui, sans-serif" fill="url(#intelBlue)" font-weight="800">intel</text>
+        </svg>
+      </div>
+      <h1><span>Sustainability</span> Through the Ages</h1>
+      <p class="lead">From founding and early chips to modern sustainability milestones—scrub the timeline and explore each moment.</p>
+      <p class="hint">Hover a card to reveal a quick summary. Click/tap to open full details.</p>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <section class="filters" aria-label="Filters">
+    <div class="legend">
+      <span class="dot history"></span> History
+      <span class="dot innovation"></span> Innovation
+      <span class="dot energy"></span> Energy
+      <span class="dot water"></span> Water
+      <span class="dot materials"></span> Materials
+      <span class="dot goals"></span> Goals
+    </div>
+    <div class="controls">
+      <label class="search">
+        <input id="search" type="search" placeholder="Search years, titles, or topics…" aria-label="Search timeline"/>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </label>
+      <select id="category" class="pill" aria-label="Filter by category">
+        <option value="all">All categories</option>
+        <option value="history">History</option>
+        <option value="innovation">Innovation</option>
+        <option value="energy">Energy</option>
+        <option value="water">Water</option>
+        <option value="materials">Materials</option>
+        <option value="goals">Goals</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <main class="timeline" aria-label="Intel timeline">
+    <div id="rail" class="rail" aria-live="polite">
+      <!-- Cards injected by script.js -->
+    </div>
+
+    <!-- Single scrubber slider -->
+    <div class="scrubber" aria-label="Timeline slider">
+      <input id="scrubber" type="range" min="0" max="100" value="0" aria-label="Scrub through the timeline" />
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-card" role="document">
+      <button class="modal-close pill" id="modalClose" type="button" role="button" aria-label="Close modal (return to timeline)" data-close="1" aria-label="Close">✕</button>
+      <div class="modal-media">
+        <div id="modalSVG" class="svgwrap" aria-hidden="true"></div>
+      </div>
+      <div class="modal-body">
+        <div class="chip" id="modalCat">Category</div>
+        <h2 id="modalTitle">Title</h2>
+        <h3 id="modalYear">Year</h3>
+        <p id="modalText">Details…</p>
+      </div>
+    </div>
+    <div class="modal-backdrop" data-close="1"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+
